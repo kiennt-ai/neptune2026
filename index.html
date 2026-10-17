@@ -77,6 +77,25 @@
       text-align: center !important;
       vertical-align: middle !important;
     }
+
+    /* Điều hướng thu gọn riêng trên thiết bị di động */
+    .mobile-nav-toggle { display: none; }
+    @media (max-width: 767px) {
+      .mobile-nav-toggle {
+        display: flex; width: 100%; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 10px 12px; margin-top: 10px;
+        border: 1px solid rgba(186,224,253,.35); border-radius: 9px;
+        background: rgba(255,255,255,.10); color: #fff; font-size: 12px;
+        font-weight: 600; text-align: left;
+      }
+      .mobile-nav-toggle .mobile-nav-current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .mobile-nav-toggle .mobile-nav-chevron { flex-shrink: 0; transition: transform .18s ease; }
+      .mobile-nav-toggle[aria-expanded="true"] .mobile-nav-chevron { transform: rotate(180deg); }
+      #mainTabNav { display: none; margin-top: 6px; padding-top: 6px; flex-direction: column; align-items: stretch; gap: 3px; }
+      #mainTabNav.mobile-open { display: flex; }
+      #mainTabNav .tab-btn { width: 100%; text-align: left; padding: 10px 12px; font-size: 12px; }
+    }
+    @media (min-width: 768px) { #mainTabNav { display: flex !important; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -125,8 +144,13 @@
         </div>
       </div>
 
+      <!-- Mobile compact navigation: mở theo yêu cầu, mặc định ẩn 4 tab -->
+      <button id="mobileNavToggle" class="mobile-nav-toggle" type="button" aria-controls="mainTabNav" aria-expanded="false">
+        <span class="flex items-center gap-2 min-w-0"><i class="fa-solid fa-bars"></i><span class="mobile-nav-current" id="mobileNavCurrent">1. Tổng quan và xếp hạng</span></span>
+        <i class="fa-solid fa-chevron-down mobile-nav-chevron"></i>
+      </button>
       <!-- Navigation Tabs -->
-      <nav class="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-sky-700/60" aria-label="Dashboard Views">
+      <nav id="mainTabNav" class="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-sky-700/60" aria-label="Dashboard Views">
         <button type="button" data-tab="overview" class="tab-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-2 text-sky-100 hover:bg-white/10">
           <i class="fa-solid fa-trophy text-amber-300"></i>
           <span>1. Tổng quan và xếp hạng giải thưởng (h = 600)</span>
@@ -2318,6 +2342,14 @@
 
     function switchTab(tabId) {
       state.activeTab = tabId;
+      // Đồng bộ nhãn và tự thu gọn menu trên mobile sau khi chuyển mục.
+      const currentNames = {overview:'1. Tổng quan và xếp hạng', activities:'2. Phân tích hoạt động', works:'3. Tra cứu công trình (206)', profiles:'4. Hồ sơ ứng viên'};
+      const currentLabel = document.getElementById('mobileNavCurrent');
+      if (currentLabel) currentLabel.textContent = currentNames[tabId] || 'Chọn mục';
+      const nav = document.getElementById('mainTabNav');
+      const toggle = document.getElementById('mobileNavToggle');
+      if (nav) nav.classList.remove('mobile-open');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
       });
@@ -2546,6 +2578,14 @@
       if (window._dashboardInitialized) return;
       window._dashboardInitialized = true;
       initDropdowns();
+      const mobileToggle = document.getElementById('mobileNavToggle');
+      const mobileTabNav = document.getElementById('mainTabNav');
+      if (mobileToggle && mobileTabNav) {
+        mobileToggle.addEventListener('click', () => {
+          const opened = mobileTabNav.classList.toggle('mobile-open');
+          mobileToggle.setAttribute('aria-expanded', String(opened));
+        });
+      }
 
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
